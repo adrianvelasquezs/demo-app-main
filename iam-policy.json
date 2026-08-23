@@ -5,18 +5,15 @@
       "Sid": "AllowGetDbSecret",
       "Effect": "Allow",
       "Action": "secretsmanager:GetSecretValue",
-      "Resource": "arn:aws:secretsmanager:us-east-1:TU_ACCOUNT_ID:secret:demo-app/db-credentials-*"
+      "Resource": "arn:aws:secretsmanager:us-east-2:247011206287:secret:demo-app/db-credentials-lDcrVq"
     },
     {
       "Sid": "AllowS3TestBucket",
       "Effect": "Allow",
-      "Action": [
-        "s3:PutObject",
-        "s3:ListBucket"
-      ],
+      "Action": ["s3:PutObject", "s3:ListBucket"],
       "Resource": [
-        "arn:aws:s3:::TU_BUCKET_NAME",
-        "arn:aws:s3:::TU_BUCKET_NAME/*"
+        "arn:aws:s3:::demo-app--test-adrian",
+        "arn:aws:s3:::demo-app--test-adrian/*"
       ]
     }
   ]
