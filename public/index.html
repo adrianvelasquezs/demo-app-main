@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Demo App Tests</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <section class="card">
+        <h1>Pruebas de DB y S3</h1>
+        <p>
+          Usa los botones para ejecutar los endpoints de prueba y ver su
+          respuesta JSON.
+        </p>
+
+        <div class="buttons">
+          <button id="dbBtn">Probar /db-test</button>
+          <button id="s3Btn">Probar /s3-test</button>
+        </div>
+
+        <div id="status" class="status">Listo para ejecutar pruebas.</div>
+        <pre id="output">Esperando respuesta...</pre>
+      </section>
+    </main>
+
+    <script src="/ui.js"></script>
+  </body>
+</html>
