@@ -45,9 +45,162 @@ async function getDbConfig() {
   return cachedDbConfig;
 }
 
-// 1) Health check simple: no depende de RDS ni de Secrets Manager.
-//    Util como health check path del ALB.
+// 1) UI simple para probar los endpoints desde el navegador.
 app.get("/", (req, res) => {
+  res.status(200).type("html").send(`<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Demo App Tests</title>
+    <style>
+      :root {
+        --bg: #f6f8fb;
+        --card: #ffffff;
+        --text: #1f2937;
+        --muted: #6b7280;
+        --border: #d1d5db;
+        --primary: #0f766e;
+        --primary-hover: #115e59;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        color: var(--text);
+        background: radial-gradient(circle at top right, #dbeafe 0%, var(--bg) 45%);
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 0 16px;
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 20px;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 1.6rem;
+      }
+
+      p {
+        margin: 0 0 18px;
+        color: var(--muted);
+      }
+
+      .buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      button {
+        border: 0;
+        border-radius: 10px;
+        padding: 10px 14px;
+        background: var(--primary);
+        color: #ffffff;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: var(--primary-hover);
+      }
+
+      button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
+
+      .status {
+        margin-top: 16px;
+        font-size: 0.95rem;
+      }
+
+      pre {
+        margin-top: 12px;
+        background: #0b1220;
+        color: #dbeafe;
+        border-radius: 10px;
+        padding: 14px;
+        overflow: auto;
+        min-height: 190px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <section class="card">
+        <h1>Pruebas de DB y S3</h1>
+        <p>Usa los botones para ejecutar los endpoints de prueba y ver su respuesta JSON.</p>
+
+        <div class="buttons">
+          <button id="dbBtn">Probar /db-test</button>
+          <button id="s3Btn">Probar /s3-test</button>
+        </div>
+
+        <div id="status" class="status">Listo para ejecutar pruebas.</div>
+        <pre id="output">Esperando respuesta...</pre>
+      </section>
+    </main>
+
+    <script>
+      const dbBtn = document.getElementById("dbBtn");
+      const s3Btn = document.getElementById("s3Btn");
+      const statusEl = document.getElementById("status");
+      const outputEl = document.getElementById("output");
+
+      function setLoading(isLoading) {
+        dbBtn.disabled = isLoading;
+        s3Btn.disabled = isLoading;
+      }
+
+      async function runTest(path) {
+        setLoading(true);
+        statusEl.textContent = "Consultando " + path + "...";
+        outputEl.textContent = "Cargando...";
+
+        try {
+          const response = await fetch(path);
+          const data = await response.json();
+          statusEl.textContent = "Resultado " + path + ": HTTP " + response.status;
+          outputEl.textContent = JSON.stringify(data, null, 2);
+        } catch (error) {
+          statusEl.textContent = "Error al consultar " + path;
+          outputEl.textContent = JSON.stringify(
+            {
+              status: "error",
+              message: error.message,
+            },
+            null,
+            2
+          );
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      dbBtn.addEventListener("click", () => runTest("/db-test"));
+      s3Btn.addEventListener("click", () => runTest("/s3-test"));
+    </script>
+  </body>
+</html>`);
+});
+
+// Health check simple: no depende de RDS ni de Secrets Manager.
+app.get("/health", (req, res) => {
   res.status(200).json({
     status: "ok",
     message: "La app esta corriendo detras del ALB y Beanstalk",
@@ -71,12 +224,13 @@ app.get("/db-test", async (req, res) => {
     `);
     await connection.query("INSERT INTO ping_test () VALUES ()");
     const [rows] = await connection.query(
-      "SELECT id, created_at FROM ping_test ORDER BY id DESC LIMIT 5"
+      "SELECT id, created_at FROM ping_test ORDER BY id DESC LIMIT 5",
     );
 
     res.status(200).json({
       status: "ok",
-      message: "Credenciales obtenidas de Secrets Manager, conexion a RDS exitosa",
+      message:
+        "Credenciales obtenidas de Secrets Manager, conexion a RDS exitosa",
       recent_pings: rows,
     });
   } catch (err) {
@@ -102,7 +256,7 @@ app.get("/s3-test", async (req, res) => {
         Key: key,
         Body: body,
         ContentType: "text/plain",
-      })
+      }),
     );
 
     const listResult = await s3Client.send(
@@ -110,7 +264,7 @@ app.get("/s3-test", async (req, res) => {
         Bucket: S3_BUCKET,
         Prefix: "ping-test/",
         MaxKeys: 5,
-      })
+      }),
     );
 
     res.status(200).json({
