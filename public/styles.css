@@ -82,6 +82,79 @@ textarea {
   background: #fafafa;
 }
 
+.list-box {
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #ffffff;
+  overflow: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.data-table th,
+.data-table td {
+  text-align: left;
+  border-bottom: 1px solid #eceff3;
+  padding: 9px 10px;
+}
+
+.data-table th {
+  background: #f7f9fc;
+  font-weight: 600;
+}
+
+.pager {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pager-info {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.object-list {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.object-item {
+  padding: 10px;
+  border-bottom: 1px solid #eceff3;
+}
+
+.object-item:last-child {
+  border-bottom: 0;
+}
+
+.object-key {
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.object-meta {
+  margin-top: 3px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.empty {
+  color: var(--muted);
+  text-align: center;
+  padding: 12px;
+}
+
 .buttons {
   display: flex;
   gap: 10px;

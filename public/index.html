@@ -30,6 +30,29 @@
               <button id="dbCreateBtn">Guardar Nota</button>
               <button id="dbListBtn">Listar Notas</button>
             </div>
+
+            <div class="pager" aria-label="Paginacion de notas">
+              <button id="dbPrevBtn" type="button">Anterior</button>
+              <span id="dbPageInfo" class="pager-info">Pagina 1</span>
+              <button id="dbNextBtn" type="button">Siguiente</button>
+            </div>
+
+            <div class="list-box">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Nota</th>
+                    <th>Fecha</th>
+                  </tr>
+                </thead>
+                <tbody id="dbListBody">
+                  <tr>
+                    <td colspan="3" class="empty">Sin datos aun.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </section>
 
           <section class="panel">
@@ -48,6 +71,16 @@
               <button id="s3UploadBtn">Subir a S3</button>
               <button id="s3ListBtn">Listar Objetos</button>
             </div>
+
+            <div class="pager" aria-label="Paginacion de objetos S3">
+              <button id="s3PrevBtn" type="button">Anterior</button>
+              <span id="s3PageInfo" class="pager-info">Pagina 1</span>
+              <button id="s3NextBtn" type="button">Siguiente</button>
+            </div>
+
+            <ul id="s3List" class="object-list">
+              <li class="empty">Sin datos aun.</li>
+            </ul>
           </section>
         </div>
 

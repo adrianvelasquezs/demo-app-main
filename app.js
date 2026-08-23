@@ -78,17 +78,38 @@ app.get("/health", (req, res) => {
 app.get("/api/db/notes", async (req, res) => {
   let connection;
   try {
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const pageSize = 10;
+    const offset = (page - 1) * pageSize;
+
     const dbConfig = await getDbConfig();
     connection = await mysql.createConnection(dbConfig);
     await ensureNotesTable(connection);
 
+    const [countRows] = await connection.query(
+      "SELECT COUNT(*) AS total FROM demo_notes",
+    );
+    const totalItems = Number(countRows[0]?.total || 0);
+    const totalPages = totalItems > 0 ? Math.ceil(totalItems / pageSize) : 1;
+    const safePage = Math.min(page, totalPages);
+    const safeOffset = (safePage - 1) * pageSize;
+
     const [rows] = await connection.query(
-      "SELECT id, note_text, created_at FROM demo_notes ORDER BY id DESC LIMIT 20",
+      "SELECT id, note_text, created_at FROM demo_notes ORDER BY id DESC LIMIT ? OFFSET ?",
+      [pageSize, safeOffset],
     );
 
     res.status(200).json({
       status: "ok",
       notes: rows,
+      pagination: {
+        page: safePage,
+        page_size: pageSize,
+        total_items: totalItems,
+        total_pages: totalPages,
+        has_prev: safePage > 1,
+        has_next: safePage < totalPages,
+      },
     });
   } catch (err) {
     res.status(500).json({
@@ -149,11 +170,19 @@ app.post("/api/db/notes", async (req, res) => {
 app.get("/api/s3/objects", async (req, res) => {
   try {
     const prefix = String(req.query.prefix || "user-notes/");
+    const pageSize = 10;
+    const continuationToken =
+      typeof req.query.continuationToken === "string" &&
+      req.query.continuationToken.length > 0
+        ? req.query.continuationToken
+        : undefined;
+
     const listResult = await s3Client.send(
       new ListObjectsV2Command({
         Bucket: S3_BUCKET,
         Prefix: prefix,
-        MaxKeys: 20,
+        MaxKeys: pageSize,
+        ContinuationToken: continuationToken,
       }),
     );
 
@@ -161,6 +190,12 @@ app.get("/api/s3/objects", async (req, res) => {
       status: "ok",
       bucket: S3_BUCKET,
       prefix,
+      pagination: {
+        page_size: pageSize,
+        continuation_token_used: continuationToken || null,
+        next_continuation_token: listResult.NextContinuationToken || null,
+        is_truncated: Boolean(listResult.IsTruncated),
+      },
       objects: (listResult.Contents || []).map((obj) => ({
         key: obj.Key,
         size: obj.Size,
