@@ -11,13 +11,44 @@
       <section class="card">
         <h1>Pruebas de DB y S3</h1>
         <p>
-          Usa los botones para ejecutar los endpoints de prueba y ver su
-          respuesta JSON.
+          Guarda notas en la base de datos y archivos de texto en S3 desde esta
+          interfaz.
         </p>
 
-        <div class="buttons">
-          <button id="dbBtn">Probar /db-test</button>
-          <button id="s3Btn">Probar /s3-test</button>
+        <div class="actions-grid">
+          <section class="panel">
+            <h2>DB: Notas</h2>
+            <label for="dbNoteInput">Texto de la nota</label>
+            <input
+              id="dbNoteInput"
+              type="text"
+              maxlength="255"
+              placeholder="Ej. Nota creada desde frontend"
+            />
+
+            <div class="buttons">
+              <button id="dbCreateBtn">Guardar Nota</button>
+              <button id="dbListBtn">Listar Notas</button>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h2>S3: Archivos</h2>
+            <label for="s3FileNameInput">Nombre de archivo</label>
+            <input id="s3FileNameInput" type="text" placeholder="nota.txt" />
+
+            <label for="s3ContentInput">Contenido</label>
+            <textarea
+              id="s3ContentInput"
+              rows="4"
+              placeholder="Texto que se guardara en S3"
+            ></textarea>
+
+            <div class="buttons">
+              <button id="s3UploadBtn">Subir a S3</button>
+              <button id="s3ListBtn">Listar Objetos</button>
+            </div>
+          </section>
         </div>
 
         <div id="status" class="status">Listo para ejecutar pruebas.</div>

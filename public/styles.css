@@ -43,6 +43,45 @@ p {
   color: var(--muted);
 }
 
+h2 {
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+}
+
+label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+input,
+textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  font: inherit;
+  margin-bottom: 12px;
+}
+
+textarea {
+  resize: vertical;
+}
+
+.actions-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.panel {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  background: #fafafa;
+}
+
 .buttons {
   display: flex;
   gap: 10px;
