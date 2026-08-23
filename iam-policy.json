@@ -1,0 +1,23 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowGetDbSecret",
+      "Effect": "Allow",
+      "Action": "secretsmanager:GetSecretValue",
+      "Resource": "arn:aws:secretsmanager:us-east-1:TU_ACCOUNT_ID:secret:demo-app/db-credentials-*"
+    },
+    {
+      "Sid": "AllowS3TestBucket",
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::TU_BUCKET_NAME",
+        "arn:aws:s3:::TU_BUCKET_NAME/*"
+      ]
+    }
+  ]
+}
