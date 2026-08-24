@@ -85,7 +85,7 @@ function renderDbNotes(notes) {
   if (!Array.isArray(notes) || notes.length === 0) {
     const row = document.createElement("tr");
     row.innerHTML =
-      '<td colspan="3" class="empty">No hay notas en esta pagina.</td>';
+      '<td colspan="4" class="empty">No hay notas en esta pagina.</td>';
     dbListBody.appendChild(row);
     return;
   }
@@ -102,9 +102,29 @@ function renderDbNotes(notes) {
     const dateCell = document.createElement("td");
     dateCell.textContent = formatDate(note.created_at);
 
+    const actionsCell = document.createElement("td");
+    const previewBtn = document.createElement("button");
+    previewBtn.type = "button";
+    previewBtn.className = "btn-small btn-secondary";
+    previewBtn.dataset.action = "preview-db";
+    previewBtn.dataset.id = String(note.id ?? "");
+    previewBtn.textContent = "Preview";
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.className = "btn-small btn-danger";
+    deleteBtn.dataset.action = "delete-db";
+    deleteBtn.dataset.id = String(note.id ?? "");
+    deleteBtn.textContent = "Delete";
+
+    actionsCell.className = "inline-actions";
+    actionsCell.appendChild(previewBtn);
+    actionsCell.appendChild(deleteBtn);
+
     row.appendChild(idCell);
     row.appendChild(textCell);
     row.appendChild(dateCell);
+    row.appendChild(actionsCell);
     dbListBody.appendChild(row);
   });
 }
@@ -150,8 +170,29 @@ function renderS3Objects(objects) {
     meta.className = "object-meta";
     meta.textContent = `${formatBytes(obj.size)} - ${formatDate(obj.last_modified)}`;
 
+    const actions = document.createElement("div");
+    actions.className = "inline-actions";
+
+    const previewBtn = document.createElement("button");
+    previewBtn.type = "button";
+    previewBtn.className = "btn-small btn-secondary";
+    previewBtn.dataset.action = "preview-s3";
+    previewBtn.dataset.key = obj.key || "";
+    previewBtn.textContent = "Preview";
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.className = "btn-small btn-danger";
+    deleteBtn.dataset.action = "delete-s3";
+    deleteBtn.dataset.key = obj.key || "";
+    deleteBtn.textContent = "Delete";
+
+    actions.appendChild(previewBtn);
+    actions.appendChild(deleteBtn);
+
     item.appendChild(key);
     item.appendChild(meta);
+    item.appendChild(actions);
     s3List.appendChild(item);
   });
 }
@@ -210,6 +251,31 @@ dbNextBtn.addEventListener("click", async () => {
   }
 });
 
+dbListBody.addEventListener("click", async (event) => {
+  const target = event.target;
+  if (!(target instanceof HTMLButtonElement)) return;
+
+  const action = target.dataset.action;
+  const id = target.dataset.id;
+  if (!id) return;
+
+  if (action === "preview-db") {
+    await runRequest(`/api/db/notes/${encodeURIComponent(id)}`);
+    return;
+  }
+
+  if (action === "delete-db") {
+    const confirmed = window.confirm(`Eliminar la nota ${id}?`);
+    if (!confirmed) return;
+
+    await runRequest(`/api/db/notes/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    });
+
+    await loadDbPage(dbPage);
+  }
+});
+
 s3UploadBtn.addEventListener("click", async () => {
   const fileName = s3FileNameInput.value.trim();
   const content = s3ContentInput.value;
@@ -261,6 +327,31 @@ s3NextBtn.addEventListener("click", async () => {
 
   s3PageIndex += 1;
   await loadS3CurrentPage();
+});
+
+s3List.addEventListener("click", async (event) => {
+  const target = event.target;
+  if (!(target instanceof HTMLButtonElement)) return;
+
+  const action = target.dataset.action;
+  const key = target.dataset.key;
+  if (!key) return;
+
+  if (action === "preview-s3") {
+    await runRequest(`/api/s3/objects/preview?key=${encodeURIComponent(key)}`);
+    return;
+  }
+
+  if (action === "delete-s3") {
+    const confirmed = window.confirm(`Eliminar el objeto ${key}?`);
+    if (!confirmed) return;
+
+    await runRequest(`/api/s3/objects?key=${encodeURIComponent(key)}`, {
+      method: "DELETE",
+    });
+
+    await loadS3CurrentPage();
+  }
 });
 
 updateDbPager();

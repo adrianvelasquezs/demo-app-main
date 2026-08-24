@@ -9,6 +9,8 @@ const {
   S3Client,
   PutObjectCommand,
   ListObjectsV2Command,
+  GetObjectCommand,
+  DeleteObjectCommand,
 } = require("@aws-sdk/client-s3");
 
 const app = express();
@@ -166,6 +168,93 @@ app.post("/api/db/notes", async (req, res) => {
   }
 });
 
+app.get("/api/db/notes/:id", async (req, res) => {
+  let connection;
+  const id = Number.parseInt(req.params.id, 10);
+
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({
+      status: "error",
+      message: "id invalido",
+    });
+  }
+
+  try {
+    const dbConfig = await getDbConfig();
+    connection = await mysql.createConnection(dbConfig);
+    await ensureNotesTable(connection);
+
+    const [rows] = await connection.query(
+      "SELECT id, note_text, created_at FROM demo_notes WHERE id = ? LIMIT 1",
+      [id],
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({
+        status: "error",
+        message: "Nota no encontrada",
+      });
+    }
+
+    res.status(200).json({
+      status: "ok",
+      note: rows[0],
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: "error",
+      message: "Fallo al obtener nota en DB",
+      error: err.message,
+    });
+  } finally {
+    if (connection) await connection.end();
+  }
+});
+
+app.delete("/api/db/notes/:id", async (req, res) => {
+  let connection;
+  const id = Number.parseInt(req.params.id, 10);
+
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({
+      status: "error",
+      message: "id invalido",
+    });
+  }
+
+  try {
+    const dbConfig = await getDbConfig();
+    connection = await mysql.createConnection(dbConfig);
+    await ensureNotesTable(connection);
+
+    const [result] = await connection.query(
+      "DELETE FROM demo_notes WHERE id = ?",
+      [id],
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        status: "error",
+        message: "Nota no encontrada",
+      });
+    }
+
+    res.status(200).json({
+      status: "ok",
+      message: "Nota eliminada",
+      deleted_id: id,
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: "error",
+      message: "Fallo al eliminar nota en DB",
+      error: err.message,
+    });
+  } finally {
+    if (connection) await connection.end();
+  }
+});
+
 // 3) API interactiva de S3 para crear y listar objetos.
 app.get("/api/s3/objects", async (req, res) => {
   try {
@@ -252,6 +341,76 @@ app.post("/api/s3/objects", async (req, res) => {
     res.status(500).json({
       status: "error",
       message: "Fallo al subir objeto a S3",
+      error: err.message,
+    });
+  }
+});
+
+app.get("/api/s3/objects/preview", async (req, res) => {
+  const key = String(req.query.key || "").trim();
+
+  if (!key) {
+    return res.status(400).json({
+      status: "error",
+      message: "key es obligatorio",
+    });
+  }
+
+  try {
+    const getResult = await s3Client.send(
+      new GetObjectCommand({
+        Bucket: S3_BUCKET,
+        Key: key,
+      }),
+    );
+
+    const content = await getResult.Body?.transformToString("utf-8");
+
+    res.status(200).json({
+      status: "ok",
+      bucket: S3_BUCKET,
+      key,
+      content_type: getResult.ContentType || "application/octet-stream",
+      content_length: getResult.ContentLength ?? null,
+      preview: content ?? "",
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: "error",
+      message: "Fallo al previsualizar objeto en S3",
+      error: err.message,
+    });
+  }
+});
+
+app.delete("/api/s3/objects", async (req, res) => {
+  const key = String(req.query.key || "").trim();
+
+  if (!key) {
+    return res.status(400).json({
+      status: "error",
+      message: "key es obligatorio",
+    });
+  }
+
+  try {
+    await s3Client.send(
+      new DeleteObjectCommand({
+        Bucket: S3_BUCKET,
+        Key: key,
+      }),
+    );
+
+    res.status(200).json({
+      status: "ok",
+      message: "Objeto eliminado en S3",
+      bucket: S3_BUCKET,
+      key,
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: "error",
+      message: "Fallo al eliminar objeto en S3",
       error: err.message,
     });
   }
